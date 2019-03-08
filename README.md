@@ -33,59 +33,65 @@ ngc                   kubernetes.io/dockerconfigjson        1      2m7s
 Now you can use your very first optimized GPU-enabled container. Kubernetes uses the “.yaml” file format.
 Create a file names pod.yaml
 
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: caffe2py3
+spec:
+  containers:
+    - name: cuda-container
+      image: nvcr.io/nvidia/caffe2:18.08-py3
+      command: ["sleep"]
+      args: ["100000" ]
+      computeResourceRequests: ["nvidia-gpu"]
+  dnsPolicy: ClusterFirstWithHostNet
+  hostNetwork: true
+  dnsConfig:
+    nameservers:
+      - 192.168.178.1
+    searches:
+      - fritz.box
+    options:
+      - name: ndots
+        value: "2"
+      - name: enp4s0
+  computeResources:
+    - name: "nvidia-gpu"
+      resources:
+        limits: 
+          nvidia.com/gpu: 1
+        requests: 
+          nvidia.com/gpu: 1
+```
 Now issue this command
 ```
 kubectl create --validate=false -f pod.yml
 kubectl get pods --show-all
 NAME       READY   STATUS               RESTARTS   AGE
-gpu-pod   1/1     Running   0          118s
+caffe2py3  1/1     Running   0          118s
 ```
 Pods can be deleted with 
 ```
 kubectl delete -f pod.yml
 ```
 
-
-
-```
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-spec:
-  containers:
-    - name: cuda-container
-      image: nvidia/cuda:9.0-base
-      command: ["sleep"]
-      args: ["100000"]
-      computeResourceRequests: ["nvidia-gpu"]
-  computeResources:
-    - name: "nvidia-gpu"
-      resources:
-        limits:
-          nvidia.com/gpu: 1
-      affinity:
-        required:
-          - key: "nvidia.com/gpu-memory"
-            operator: "Gt"
-            values: ["8000"] # change value to appropriate mem for GPU
+You can also run a job in interactive mode:
 
 ```
-Now run 
-
-```
-kubectl  describe po/gpu-pod
+kubectl  describe caffe2py3
 ```
 You can open a bash session inside the container
 
 ```
-kubectl exec -it gpu-pod bash
+kubectl exec -it caffe2py3 bash
 ```
 
 ## Solve DNS issues you might have
+Your /etc/resolv.config must be adopted in order to be able to download repositories from the internet.
+Please read this guide :    
+https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
 
-
-## LIBRARY_PATH
 
 
       
