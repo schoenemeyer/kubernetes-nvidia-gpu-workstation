@@ -31,48 +31,61 @@ ngc                   kubernetes.io/dockerconfigjson        1      2m7s
 ```
 
 Now you can use your very first optimized GPU-enabled container. Kubernetes uses the “.yaml” file format.
+Create a file names pod.yaml
 
-Create a file names cuda-ngc.yaml
+Now issue this command
+```
+kubectl create --validate=false -f pod.yml
+kubectl get pods --show-all
+NAME       READY   STATUS               RESTARTS   AGE
+gpu-pod   1/1     Running   0          118s
+```
+Pods can be deleted with 
+```
+kubectl delete -f pod.yml
+```
+
+
 
 ```
 apiVersion: v1
-kind: Pod 
-metadata: 
-   name: cuda-ngc
-   namespace: default
-   labels:
-      environment: dev
-      app: cuda
+kind: Pod
+metadata:
+  name: gpu-pod
 spec:
-   containers:
-   - name: cuda-container
-      image: nvcr.io/nvidia/cuda:9.0-cudnn7.1-devel-ubuntu16.04
-      imagePullPolicy: IfNotPresent
-      Args: ["nvidia-smi"]
-      extendedResourceRequests: ["nvidia-gpu"]
-   extendedResources: 
-      - name: "nvidia-gpu"
+  containers:
+    - name: cuda-container
+      image: nvidia/cuda:9.0-base
+      command: ["sleep"]
+      args: ["100000"]
+      computeResourceRequests: ["nvidia-gpu"]
+  computeResources:
+    - name: "nvidia-gpu"
       resources:
-         limits: 
-            nvidia.com/gpu: 1   # change value to appropriate number of GPU(s) 
-         affinity: 
-            required: 
-               - key: "nvidia.com/gpu-memory" 
-                 operator: "Gt" 
-                 values: ["8000"]   # change value to appropriate mem for GPU(s) 
-      restartPolicy: Never 
-      imagePullSecrets: 
-      - name: ngc   # specifying the secret/credentials to use when connecting to NGC
-      
-      ```
-      
-      Now issue this command
-      ```
-      kubectl create --validate=false -f ./cuda-ngc.yaml
-      kubectl get pods --show-all
-      NAME       READY   STATUS               RESTARTS   AGE
-      cuda-ngc   0/1     ContainerCannotRun   0          35s
-      (base) [thomas@localhost ~]$ 
+        limits:
+          nvidia.com/gpu: 1
+      affinity:
+        required:
+          - key: "nvidia.com/gpu-memory"
+            operator: "Gt"
+            values: ["8000"] # change value to appropriate mem for GPU
 
-      ```
+```
+Now run 
+
+```
+kubectl  describe po/gpu-pod
+```
+You can open a bash session inside the container
+
+```
+kubectl exec -it gpu-pod bash
+```
+
+## Solve DNS issues you might have
+
+
+## LIBRARY_PATH
+
+
       
